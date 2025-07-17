@@ -12,8 +12,8 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReverseNumber9 - Audio Recorder & Reverser</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>ReverseNumber9 - Old West Audio Recorder</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <nav class="navbar">
@@ -23,7 +23,7 @@
     <div class="container">
         <div class="header">
             <h1>ReverseNumber9</h1>
-            <p>Record, Play, and Reverse Audio with Style</p>
+            <p>Audio Recorder & Reverser</p>
         </div>
 
         <div class="recording-card">
@@ -35,7 +35,10 @@
             <div class="timer" id="timer" style="display: none;">00:00</div>
 
             <div class="audio-visualizer" id="visualizer">
-                Audio waveform will appear here during recording
+                <div class="waveform-container">
+                    <canvas class="waveform-canvas" id="waveformCanvas"></canvas>
+                    <div id="waveformText">Audio waveform will appear here during recording</div>
+                </div>
             </div>
 
             <div class="controls">
@@ -99,9 +102,16 @@
                 this.currentAudio = null;
                 this.startTime = null;
                 this.timerInterval = null;
+                this.audioContext = null;
+                this.analyser = null;
+                this.dataArray = null;
+                this.animationId = null;
+                this.canvas = null;
+                this.canvasCtx = null;
 
                 this.initializeElements();
                 this.attachEventListeners();
+                this.setupCanvas();
             }
 
             initializeElements() {
@@ -115,6 +125,20 @@
                 this.statusText = document.getElementById('statusText');
                 this.timer = document.getElementById('timer');
                 this.visualizer = document.getElementById('visualizer');
+                this.waveformText = document.getElementById('waveformText');
+                this.canvas = document.getElementById('waveformCanvas');
+                this.canvasCtx = this.canvas.getContext('2d');
+            }
+
+            setupCanvas() {
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.offsetWidth;
+                this.canvas.height = container.offsetHeight;
             }
 
             attachEventListeners() {
@@ -145,9 +169,54 @@
                 this.timer.style.display = 'none';
             }
 
+            drawWaveform() {
+                if (!this.analyser || !this.dataArray) return;
+
+                this.analyser.getByteFrequencyData(this.dataArray);
+
+                this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const barWidth = this.canvas.width / this.dataArray.length * 2;
+                let x = 0;
+
+                for (let i = 0; i < this.dataArray.length; i++) {
+                    const barHeight = (this.dataArray[i] / 255) * this.canvas.height * 0.8;
+
+                    // Western style gradient
+                    const gradient = this.canvasCtx.createLinearGradient(0, this.canvas.height - barHeight, 0, this.canvas.height);
+                    gradient.addColorStop(0, '#8B4513');
+                    gradient.addColorStop(0.5, '#CD853F');
+                    gradient.addColorStop(1, '#D2691E');
+
+                    this.canvasCtx.fillStyle = gradient;
+                    this.canvasCtx.fillRect(x, this.canvas.height - barHeight, barWidth, barHeight);
+
+                    // Add shadow effect
+                    this.canvasCtx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    this.canvasCtx.shadowBlur = 2;
+                    this.canvasCtx.shadowOffsetX = 1;
+                    this.canvasCtx.shadowOffsetY = 1;
+
+                    x += barWidth + 1;
+                }
+
+                this.animationId = requestAnimationFrame(() => this.drawWaveform());
+            }
+
             async startRecording() {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    // Setup audio context for visualization
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = this.audioContext.createMediaStreamSource(stream);
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = 256;
+
+                    source.connect(this.analyser);
+
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
                     this.mediaRecorder = new MediaRecorder(stream);
                     this.recordedChunks = [];
 
@@ -158,14 +227,25 @@
                     this.mediaRecorder.onstop = async () => {
                         this.recordedBlob = new Blob(this.recordedChunks, { type: 'audio/wav' });
                         await this.processRecording();
-                        this.updateStatus('ready', 'Recording Ready');
-                        this.visualizer.textContent = 'Recording completed! Ready to play.';
+                        this.updateStatus('ready', 'Recording Ready, Partner');
+                        this.waveformText.textContent = 'Recording completed! Ready to play.';
+                        this.waveformText.style.display = 'block';
+
+                        // Stop visualization
+                        if (this.animationId) {
+                            cancelAnimationFrame(this.animationId);
+                            this.animationId = null;
+                        }
+                        this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                     };
 
                     this.mediaRecorder.start();
                     this.startTimer();
-                    this.updateStatus('recording', 'Recording...');
-                    this.visualizer.textContent = 'Recording in progress...';
+                    this.updateStatus('recording', 'Recording... Speak up, Partner');
+                    this.waveformText.style.display = 'none';
+
+                    // Start visualization
+                    this.drawWaveform();
 
                     this.recordBtn.disabled = true;
                     this.stopBtn.disabled = false;
@@ -174,7 +254,7 @@
 
                 } catch (err) {
                     console.error('Unable to access microphone:', err);
-                    alert('Could not start recording. Please check your microphone permissions.');
+                    alert('Could not start recording. Please check your microphone permissions, partner!');
                     this.updateStatus('', 'Recording Failed');
                 }
             }
@@ -183,6 +263,10 @@
                 if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                     this.mediaRecorder.stop();
                     this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+
+                if (this.audioContext && this.audioContext.state !== 'closed') {
+                    this.audioContext.close();
                 }
 
                 this.stopTimer();
@@ -228,16 +312,19 @@
 
                 this.currentAudio.onended = () => {
                     if (this.currentAudio) this.currentAudio = null;
-                    this.visualizer.textContent = 'Playback finished.';
+                    this.waveformText.textContent = 'Playback finished, partner.';
+                    this.waveformText.style.display = 'block';
                 };
 
                 this.currentAudio.play();
-                this.visualizer.textContent = 'Playing original audio...';
+                this.waveformText.textContent = 'Playing original audio...';
+                this.waveformText.style.display = 'block';
             }
 
             playReversed() {
                 this.playBlobReversed(this.recordedBlob);
-                this.visualizer.textContent = 'Playing reversed audio...';
+                this.waveformText.textContent = 'Playing reversed audio... sounds spooky!';
+                this.waveformText.style.display = 'block';
             }
 
             playBlobReversed(blob) {
@@ -254,7 +341,8 @@
                         source.connect(audioCtx.destination);
                         source.onended = () => {
                             if (this.currentAudio === source) this.currentAudio = null;
-                            this.visualizer.textContent = 'Reversed playback finished.';
+                            this.waveformText.textContent = 'Reversed playback finished, partner.';
+                            this.waveformText.style.display = 'block';
                         };
 
                         this.stopCurrentAudio();
