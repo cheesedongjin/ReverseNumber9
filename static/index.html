@@ -29,24 +29,31 @@ const reversePlayBtn = document.getElementById('reversePlayBtn');
 const downloadLink = document.getElementById('downloadLink');
 
 recordBtn.onclick = async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  mediaRecorder = new MediaRecorder(stream);
-  recordedChunks = [];
-  mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-  mediaRecorder.onstop = e => {
-    recordedBlob = new Blob(recordedChunks);
-    playBtn.disabled = false;
-    reversePlayBtn.disabled = false;
-    downloadLink.href = URL.createObjectURL(recordedBlob);
-    downloadLink.style.display = 'inline';
-  };
-  mediaRecorder.start();
-  recordBtn.disabled = true;
-  stopBtn.disabled = false;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+    mediaRecorder.onstop = e => {
+      recordedBlob = new Blob(recordedChunks);
+      playBtn.disabled = false;
+      reversePlayBtn.disabled = false;
+      downloadLink.href = URL.createObjectURL(recordedBlob);
+      downloadLink.style.display = 'inline';
+    };
+    mediaRecorder.start();
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+  } catch (err) {
+    console.error('Unable to access microphone:', err);
+    alert('Could not start recording. Check your microphone permissions.');
+  }
 };
 
 stopBtn.onclick = () => {
-  mediaRecorder.stop();
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
   recordBtn.disabled = false;
   stopBtn.disabled = true;
 };
