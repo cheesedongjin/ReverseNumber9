@@ -8,11 +8,11 @@ ReverseNumber9 instantly reverses TTS-generated speech and recorded audio in you
    ```bash
    pip install -r requirements.txt
    ```
-2. Start the TTS server:
+2. Start the TTS server (optionally set `PORT` to choose the port):
    ```bash
-   python tts_server.py
+   PORT=5000 python tts_server.py
    ```
-   The server provides a `/tts?text=...` endpoint returning a WAV file.
+   The server listens on `0.0.0.0:$PORT` and provides a `/tts?text=...` endpoint returning a WAV file.
 
 3. Open `static/index.html` in your browser. Use HTTPS or serve the files with a local web server if your browser blocks microphone access over `file://`.
 
