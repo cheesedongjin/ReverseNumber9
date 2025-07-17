@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="container">
 <h1>ReverseNumber9</h1>
 <section>
 <h2>Record</h2>
@@ -14,7 +15,9 @@
 <button id="playBtn" disabled>Play</button>
 <button id="reversePlayBtn" disabled>Play Reversed</button>
 <a id="downloadLink" download="recording.wav">Download</a>
+<a id="reverseDownloadLink" download="recording_reversed.wav">Download Reversed</a>
 </section>
+</div>
 <script>
 let mediaRecorder;
 let recordedChunks = [];
@@ -25,6 +28,7 @@ const stopBtn = document.getElementById('stopBtn');
 const playBtn = document.getElementById('playBtn');
 const reversePlayBtn = document.getElementById('reversePlayBtn');
 const downloadLink = document.getElementById('downloadLink');
+const reverseDownloadLink = document.getElementById('reverseDownloadLink');
 
 recordBtn.onclick = async () => {
   try {
@@ -38,6 +42,10 @@ recordBtn.onclick = async () => {
       reversePlayBtn.disabled = false;
       downloadLink.href = URL.createObjectURL(recordedBlob);
       downloadLink.style.display = 'inline';
+      createReversedBlob(recordedBlob).then(blob => {
+        reverseDownloadLink.href = URL.createObjectURL(blob);
+        reverseDownloadLink.style.display = 'inline';
+      });
     };
     mediaRecorder.start();
     recordBtn.disabled = true;
@@ -67,6 +75,60 @@ function playBlobReversed(blob) {
     source.connect(audioCtx.destination);
     source.start();
   }));
+}
+
+function audioBufferToWav(buffer) {
+  const numOfChan = buffer.numberOfChannels;
+  const length = buffer.length * numOfChan * 2 + 44;
+  const bufferArray = new ArrayBuffer(length);
+  const view = new DataView(bufferArray);
+  let pos = 0;
+
+  const writeString = s => { for (let i = 0; i < s.length; i++) view.setUint8(pos++, s.charCodeAt(i)); };
+  const writeUint16 = d => { view.setUint16(pos, d, true); pos += 2; };
+  const writeUint32 = d => { view.setUint32(pos, d, true); pos += 4; };
+
+  writeString('RIFF');
+  writeUint32(length - 8);
+  writeString('WAVE');
+  writeString('fmt ');
+  writeUint32(16);
+  writeUint16(1);
+  writeUint16(numOfChan);
+  writeUint32(buffer.sampleRate);
+  writeUint32(buffer.sampleRate * numOfChan * 2);
+  writeUint16(numOfChan * 2);
+  writeUint16(16);
+  writeString('data');
+  writeUint32(length - pos - 4);
+
+  const channels = [];
+  for (let i = 0; i < numOfChan; i++) channels.push(buffer.getChannelData(i));
+
+  let offset = 0;
+  while (pos < length) {
+    for (let i = 0; i < numOfChan; i++) {
+      let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+      sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(pos, sample, true);
+      pos += 2;
+    }
+    offset++;
+  }
+
+  return new Blob([bufferArray], { type: 'audio/wav' });
+}
+
+function createReversedBlob(blob) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return blob.arrayBuffer()
+    .then(buf => audioCtx.decodeAudioData(buf))
+    .then(audioBuffer => {
+      for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+        Array.prototype.reverse.call(audioBuffer.getChannelData(i));
+      }
+      return audioBufferToWav(audioBuffer);
+    });
 }
 
 playBtn.onclick = () => {
