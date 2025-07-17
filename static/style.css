@@ -42,6 +42,12 @@ a:hover {
   display: none;
 }
 
+#recordingStatus {
+  display: none;
+  margin-left: 8px;
+  font-weight: bold;
+}
+
 body {
   font-family: 'Arial', sans-serif;
   margin: 0;
