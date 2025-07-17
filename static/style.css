@@ -1,9 +1,60 @@
+/* 시간 컨셉 CSS - 시계와 시간의 흐름을 표현 */
+
 button {
-  margin: 5px;
+  margin: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Arial', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  transition: all 0.6s ease;
+  transform: translate(-50%, -50%);
+}
+
+button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 
 a {
-  margin: 5px;
+  margin: 8px;
+  padding: 10px 20px;
+  color: #4a5568;
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  display: inline-block;
+  font-weight: 500;
+}
+
+a:hover {
+  color: #667eea;
+  border-color: #667eea;
+  transform: scale(1.05);
 }
 
 #downloadLink {
@@ -15,34 +66,165 @@ a {
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 20px;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  min-height: 100vh;
+  color: #333;
+  position: relative;
+}
+
+/* 시간을 표현하는 배경 애니메이션 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: timeFlow 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes timeFlow {
+  0%, 100% { opacity: 0.3; transform: rotate(0deg); }
+  50% { opacity: 0.7; transform: rotate(180deg); }
 }
 
 h1 {
   margin-top: 0;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  font-size: 2.2em;
+  letter-spacing: 1px;
 }
 
 .container {
   max-width: 600px;
   margin: 50px auto;
-  padding: 20px;
+  padding: 30px;
   text-align: center;
-  background: #fafafa;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  z-index: 2;
+}
+
+/* 시계 틱 마크 효과 */
+.container::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.3) 25%, 
+    transparent 50%, 
+    rgba(118, 75, 162, 0.3) 75%, 
+    transparent 100%);
+  border-radius: 22px;
+  z-index: -1;
+  animation: clockTick 4s linear infinite;
+}
+
+@keyframes clockTick {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 header {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+/* 시계 바늘 효과 */
+header::after {
+  content: '⏰';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 1.5em;
+  animation: tickTock 2s ease-in-out infinite;
+}
+
+@keyframes tickTock {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
 }
 
 #title {
   font-weight: bold;
-  font-size: 1.5em;
+  font-size: 1.8em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+/* 시간 흐름 효과 */
+#title::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #667eea 50%, 
+    transparent 100%);
+  animation: timeLine 3s ease-in-out infinite;
+}
+
+@keyframes timeLine {
+  0%, 100% { width: 50px; opacity: 0.5; }
+  50% { width: 200px; opacity: 1; }
 }
 
 main#not-found {
   text-align: center;
+  padding: 40px 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px;
+  margin-top: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* 시간 숫자 효과 */
+.time-accent {
+  color: #667eea;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+/* 반응형 시간 효과 */
+@media (max-width: 768px) {
+  .container {
+    margin: 20px;
+    padding: 20px;
+  }
+  
+  #title {
+    font-size: 1.5em;
+  }
+  
+  header::after {
+    font-size: 1.2em;
+  }
 }
