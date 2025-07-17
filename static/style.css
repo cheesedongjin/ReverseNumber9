@@ -4,6 +4,12 @@
     box-sizing: border-box;
 }
 
+#recordingStatus {
+  display: none;
+  margin-left: 8px;
+  font-weight: bold;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
