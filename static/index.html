@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ReverseNumber9</title>
+<style>
+button { margin: 5px; }
+</style>
+</head>
+<body>
+<h1>ReverseNumber9</h1>
+<section>
+<h2>Record</h2>
+<button id="recordBtn">Start Recording</button>
+<button id="stopBtn" disabled>Stop Recording</button>
+<button id="playBtn" disabled>Play</button>
+<button id="reversePlayBtn" disabled>Play Reversed</button>
+<a id="downloadLink" download="recording.wav" style="display:none">Download</a>
+</section>
+<section>
+<h2>Text to Speech</h2>
+<textarea id="ttsText" rows="3" cols="40" placeholder="Enter text..."></textarea><br>
+<button id="ttsBtn">Synthesize</button>
+<button id="ttsPlayBtn" disabled>Play TTS</button>
+<button id="ttsReversePlayBtn" disabled>Play TTS Reversed</button>
+<a id="ttsDownloadLink" download="tts.wav" style="display:none">Download TTS</a>
+</section>
+<script>
+let mediaRecorder;
+let recordedChunks = [];
+let recordedBlob;
+
+const recordBtn = document.getElementById('recordBtn');
+const stopBtn = document.getElementById('stopBtn');
+const playBtn = document.getElementById('playBtn');
+const reversePlayBtn = document.getElementById('reversePlayBtn');
+const downloadLink = document.getElementById('downloadLink');
+
+recordBtn.onclick = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  mediaRecorder = new MediaRecorder(stream);
+  recordedChunks = [];
+  mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+  mediaRecorder.onstop = e => {
+    recordedBlob = new Blob(recordedChunks);
+    playBtn.disabled = false;
+    reversePlayBtn.disabled = false;
+    downloadLink.href = URL.createObjectURL(recordedBlob);
+    downloadLink.style.display = 'inline';
+  };
+  mediaRecorder.start();
+  recordBtn.disabled = true;
+  stopBtn.disabled = false;
+};
+
+stopBtn.onclick = () => {
+  mediaRecorder.stop();
+  recordBtn.disabled = false;
+  stopBtn.disabled = true;
+};
+
+function playBlobReversed(blob) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  blob.arrayBuffer().then(buf => audioCtx.decodeAudioData(buf, audioBuf => {
+    for (let i = 0; i < audioBuf.numberOfChannels; i++) {
+      Array.prototype.reverse.call(audioBuf.getChannelData(i));
+    }
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuf;
+    source.connect(audioCtx.destination);
+    source.start();
+  }));
+}
+
+playBtn.onclick = () => {
+  const url = URL.createObjectURL(recordedBlob);
+  new Audio(url).play();
+};
+
+reversePlayBtn.onclick = () => {
+  playBlobReversed(recordedBlob);
+};
+
+// TTS
+let ttsBlob;
+const ttsBtn = document.getElementById('ttsBtn');
+const ttsPlayBtn = document.getElementById('ttsPlayBtn');
+const ttsReversePlayBtn = document.getElementById('ttsReversePlayBtn');
+const ttsDownloadLink = document.getElementById('ttsDownloadLink');
+
+ttsBtn.onclick = () => {
+  const text = document.getElementById('ttsText').value;
+  fetch(`/tts?text=${encodeURIComponent(text)}`)
+    .then(r => r.blob())
+    .then(b => {
+      ttsBlob = b;
+      ttsPlayBtn.disabled = false;
+      ttsReversePlayBtn.disabled = false;
+      ttsDownloadLink.href = URL.createObjectURL(ttsBlob);
+      ttsDownloadLink.style.display = 'inline';
+    });
+};
+
+ttsPlayBtn.onclick = () => {
+  const url = URL.createObjectURL(ttsBlob);
+  new Audio(url).play();
+};
+
+ttsReversePlayBtn.onclick = () => {
+  playBlobReversed(ttsBlob);
+};
+</script>
+</body>
+</html>
