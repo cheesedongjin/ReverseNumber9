@@ -22,6 +22,7 @@
 let mediaRecorder;
 let recordedChunks = [];
 let recordedBlob;
+let currentAudio;
 
 const recordBtn = document.getElementById('recordBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -64,6 +65,17 @@ stopBtn.onclick = () => {
   stopBtn.disabled = true;
 };
 
+function stopCurrentAudio() {
+  if (currentAudio) {
+    if (typeof currentAudio.pause === 'function') {
+      currentAudio.pause();
+    } else if (typeof currentAudio.stop === 'function') {
+      try { currentAudio.stop(); } catch (e) {}
+    }
+    currentAudio = null;
+  }
+}
+
 function playBlobReversed(blob) {
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   blob.arrayBuffer().then(buf => audioCtx.decodeAudioData(buf, audioBuf => {
@@ -73,6 +85,11 @@ function playBlobReversed(blob) {
     const source = audioCtx.createBufferSource();
     source.buffer = audioBuf;
     source.connect(audioCtx.destination);
+    source.onended = () => {
+      if (currentAudio === source) currentAudio = null;
+    };
+    stopCurrentAudio();
+    currentAudio = source;
     source.start();
   }));
 }
@@ -132,8 +149,12 @@ function createReversedBlob(blob) {
 }
 
 playBtn.onclick = () => {
+  stopCurrentAudio();
   const url = URL.createObjectURL(recordedBlob);
-  new Audio(url).play();
+  currentAudio = new Audio(url);
+  const audio = currentAudio;
+  audio.onended = () => { if (currentAudio === audio) currentAudio = null; };
+  audio.play();
 };
 
 reversePlayBtn.onclick = () => {
