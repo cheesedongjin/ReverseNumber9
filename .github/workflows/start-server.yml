@@ -25,5 +25,5 @@ jobs:
           python tts_server.py &
           PID=$!
           sleep 15
-          curl -I http://127.0.0.1:$PORT/tts?text=hello
+          curl -I http://127.0.0.1:$PORT/tts?text=hello]
           kill $PID
