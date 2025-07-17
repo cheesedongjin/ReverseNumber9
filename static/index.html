@@ -147,7 +147,10 @@
             }
 
             attachEventListeners() {
-                this.recordBtn.addEventListener('click', () => this.startRecording());
+                this.recordBtn.addEventListener('click', () => {
+                    this.stopCurrentAudio();
+                    this.startRecording();
+                });
                 this.stopBtn.addEventListener('click', () => this.stopRecording());
                 this.playBtn.addEventListener('click', () => this.playOriginal());
                 this.reversePlayBtn.addEventListener('click', () => this.playReversed());
