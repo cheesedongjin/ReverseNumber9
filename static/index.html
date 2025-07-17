@@ -24,6 +24,7 @@
 <button id="stopBtn" disabled>Stop Recording</button>
 <button id="playBtn" disabled>Play</button>
 <button id="reversePlayBtn" disabled>Play Reversed</button>
+<span id="recordingStatus">Recording...</span>
 <a id="downloadLink" download="recording.wav">Download</a>
 <a id="reverseDownloadLink" download="recording_reversed.wav">Download Reversed</a>
 </section>
@@ -40,6 +41,7 @@ const playBtn = document.getElementById('playBtn');
 const reversePlayBtn = document.getElementById('reversePlayBtn');
 const downloadLink = document.getElementById('downloadLink');
 const reverseDownloadLink = document.getElementById('reverseDownloadLink');
+const recordingStatus = document.getElementById('recordingStatus');
 
 recordBtn.onclick = async () => {
   try {
@@ -57,8 +59,10 @@ recordBtn.onclick = async () => {
         reverseDownloadLink.href = URL.createObjectURL(blob);
         reverseDownloadLink.style.display = 'inline';
       });
+      recordingStatus.style.display = 'none';
     };
     mediaRecorder.start();
+    recordingStatus.style.display = 'inline';
     recordBtn.disabled = true;
     stopBtn.disabled = false;
   } catch (err) {
@@ -73,6 +77,7 @@ stopBtn.onclick = () => {
   }
   recordBtn.disabled = false;
   stopBtn.disabled = true;
+  recordingStatus.style.display = 'none';
 };
 
 function stopCurrentAudio() {
