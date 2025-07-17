@@ -1,0 +1,26 @@
+button {
+  margin: 5px;
+}
+
+#downloadLink {
+  display: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+header {
+  margin-bottom: 20px;
+}
+
+#title {
+  font-weight: bold;
+  font-size: 1.5em;
+}
+
+main#not-found {
+  text-align: center;
+}
