@@ -12,7 +12,12 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReverseNumber9 - Old West Audio Recorder</title>
+    <title>ReverseNumber9 - Audio Reverser</title>
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="Audio Reverser">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cheesedongjin.github.io/ReverseNumber9/">
+    <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -227,7 +232,7 @@
                     this.mediaRecorder.onstop = async () => {
                         this.recordedBlob = new Blob(this.recordedChunks, { type: 'audio/wav' });
                         await this.processRecording();
-                        this.updateStatus('ready', 'Recording Ready, Partner');
+                        this.updateStatus('ready', 'Recording Ready.');
                         this.waveformText.textContent = 'Recording completed! Ready to play.';
                         this.waveformText.style.display = 'block';
 
@@ -241,7 +246,7 @@
 
                     this.mediaRecorder.start();
                     this.startTimer();
-                    this.updateStatus('recording', 'Recording... Speak up, Partner');
+                    this.updateStatus('recording', 'Recording...');
                     this.waveformText.style.display = 'none';
 
                     // Start visualization
@@ -254,7 +259,7 @@
 
                 } catch (err) {
                     console.error('Unable to access microphone:', err);
-                    alert('Could not start recording. Please check your microphone permissions, partner!');
+                    alert('Could not start recording. Please check your microphone permissions.');
                     this.updateStatus('', 'Recording Failed');
                 }
             }
@@ -312,7 +317,7 @@
 
                 this.currentAudio.onended = () => {
                     if (this.currentAudio) this.currentAudio = null;
-                    this.waveformText.textContent = 'Playback finished, partner.';
+                    this.waveformText.textContent = 'Playback finished.';
                     this.waveformText.style.display = 'block';
                 };
 
@@ -323,7 +328,7 @@
 
             playReversed() {
                 this.playBlobReversed(this.recordedBlob);
-                this.waveformText.textContent = 'Playing reversed audio... sounds spooky!';
+                this.waveformText.textContent = 'Playing reversed audio...';
                 this.waveformText.style.display = 'block';
             }
 
@@ -341,7 +346,7 @@
                         source.connect(audioCtx.destination);
                         source.onended = () => {
                             if (this.currentAudio === source) this.currentAudio = null;
-                            this.waveformText.textContent = 'Reversed playback finished, partner.';
+                            this.waveformText.textContent = 'Reversed playback finished.';
                             this.waveformText.style.display = 'block';
                         };
 
