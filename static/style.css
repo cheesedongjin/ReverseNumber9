@@ -1,0 +1,48 @@
+button {
+  margin: 5px;
+}
+
+a {
+  margin: 5px;
+}
+
+#downloadLink {
+  display: none;
+}
+
+#reverseDownloadLink {
+  display: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+header {
+  margin-bottom: 20px;
+}
+
+#title {
+  font-weight: bold;
+  font-size: 1.5em;
+}
+
+main#not-found {
+  text-align: center;
+}
