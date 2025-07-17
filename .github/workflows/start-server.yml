@@ -21,8 +21,9 @@ jobs:
           pip install -r requirements.txt
       - name: Start server
         run: |
+          export PORT=5000
           python tts_server.py &
           PID=$!
           sleep 15
-          curl -I http://127.0.0.1:5000/tts?text=hello
+          curl -I http://127.0.0.1:$PORT/tts?text=hello]
           kill $PID
