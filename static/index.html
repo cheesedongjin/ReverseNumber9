@@ -17,14 +17,6 @@ button { margin: 5px; }
 <button id="reversePlayBtn" disabled>Play Reversed</button>
 <a id="downloadLink" download="recording.wav" style="display:none">Download</a>
 </section>
-<section>
-<h2>Text to Speech</h2>
-<textarea id="ttsText" rows="3" cols="40" placeholder="Enter text..."></textarea><br>
-<button id="ttsBtn">Synthesize</button>
-<button id="ttsPlayBtn" disabled>Play TTS</button>
-<button id="ttsReversePlayBtn" disabled>Play TTS Reversed</button>
-<a id="ttsDownloadLink" download="tts.wav" style="display:none">Download TTS</a>
-</section>
 <script>
 let mediaRecorder;
 let recordedChunks = [];
@@ -81,34 +73,6 @@ reversePlayBtn.onclick = () => {
   playBlobReversed(recordedBlob);
 };
 
-// TTS
-let ttsBlob;
-const ttsBtn = document.getElementById('ttsBtn');
-const ttsPlayBtn = document.getElementById('ttsPlayBtn');
-const ttsReversePlayBtn = document.getElementById('ttsReversePlayBtn');
-const ttsDownloadLink = document.getElementById('ttsDownloadLink');
-
-ttsBtn.onclick = () => {
-  const text = document.getElementById('ttsText').value;
-  fetch(`/tts?text=${encodeURIComponent(text)}`)
-    .then(r => r.blob())
-    .then(b => {
-      ttsBlob = b;
-      ttsPlayBtn.disabled = false;
-      ttsReversePlayBtn.disabled = false;
-      ttsDownloadLink.href = URL.createObjectURL(ttsBlob);
-      ttsDownloadLink.style.display = 'inline';
-    });
-};
-
-ttsPlayBtn.onclick = () => {
-  const url = URL.createObjectURL(ttsBlob);
-  new Audio(url).play();
-};
-
-ttsReversePlayBtn.onclick = () => {
-  playBlobReversed(ttsBlob);
-};
 </script>
 </body>
 </html>
