@@ -1,176 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8JZ9J4MT22"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8JZ9J4MT22"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-  gtag('config', 'G-8JZ9J4MT22');
-</script>
-<meta charset="UTF-8">
-<title>ReverseNumber9</title>
-<link rel="stylesheet" href="style.css">
+      gtag('config', 'G-8JZ9J4MT22');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReverseNumber9 - Audio Recorder & Reverser</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<nav><a href="other-sites/addresses">Other Sites by Jdeseech</a></nav>
-<div class="container">
-<h1>ReverseNumber9</h1>
-<section>
-<h2>Record</h2>
-<button id="recordBtn">Start Recording</button>
-<button id="stopBtn" disabled>Stop Recording</button>
-<button id="playBtn" disabled>Play</button>
-<button id="reversePlayBtn" disabled>Play Reversed</button>
-<a id="downloadLink" download="recording.wav">Download</a>
-<a id="reverseDownloadLink" download="recording_reversed.wav">Download Reversed</a>
-</section>
-</div>
-<script>
-let mediaRecorder;
-let recordedChunks = [];
-let recordedBlob;
-let currentAudio;
+    <nav class="navbar">
+        <a href="other-sites/addresses">Other Sites by Jdeseech</a>
+    </nav>
 
-const recordBtn = document.getElementById('recordBtn');
-const stopBtn = document.getElementById('stopBtn');
-const playBtn = document.getElementById('playBtn');
-const reversePlayBtn = document.getElementById('reversePlayBtn');
-const downloadLink = document.getElementById('downloadLink');
-const reverseDownloadLink = document.getElementById('reverseDownloadLink');
+    <div class="container">
+        <div class="header">
+            <h1>ReverseNumber9</h1>
+            <p>Record, Play, and Reverse Audio with Style</p>
+        </div>
 
-recordBtn.onclick = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    recordedChunks = [];
-    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-    mediaRecorder.onstop = e => {
-      recordedBlob = new Blob(recordedChunks);
-      playBtn.disabled = false;
-      reversePlayBtn.disabled = false;
-      downloadLink.href = URL.createObjectURL(recordedBlob);
-      downloadLink.style.display = 'inline';
-      createReversedBlob(recordedBlob).then(blob => {
-        reverseDownloadLink.href = URL.createObjectURL(blob);
-        reverseDownloadLink.style.display = 'inline';
-      });
-    };
-    mediaRecorder.start();
-    recordBtn.disabled = true;
-    stopBtn.disabled = false;
-  } catch (err) {
-    console.error('Unable to access microphone:', err);
-    alert('Could not start recording. Check your microphone permissions.');
-  }
-};
+        <div class="recording-card">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Ready to Record</span>
+            </div>
 
-stopBtn.onclick = () => {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
-  recordBtn.disabled = false;
-  stopBtn.disabled = true;
-};
+            <div class="timer" id="timer" style="display: none;">00:00</div>
 
-function stopCurrentAudio() {
-  if (currentAudio) {
-    if (typeof currentAudio.pause === 'function') {
-      currentAudio.pause();
-    } else if (typeof currentAudio.stop === 'function') {
-      try { currentAudio.stop(); } catch (e) {}
-    }
-    currentAudio = null;
-  }
-}
+            <div class="audio-visualizer" id="visualizer">
+                Audio waveform will appear here during recording
+            </div>
 
-function playBlobReversed(blob) {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  blob.arrayBuffer().then(buf => audioCtx.decodeAudioData(buf, audioBuf => {
-    for (let i = 0; i < audioBuf.numberOfChannels; i++) {
-      Array.prototype.reverse.call(audioBuf.getChannelData(i));
-    }
-    const source = audioCtx.createBufferSource();
-    source.buffer = audioBuf;
-    source.connect(audioCtx.destination);
-    source.onended = () => {
-      if (currentAudio === source) currentAudio = null;
-    };
-    stopCurrentAudio();
-    currentAudio = source;
-    source.start();
-  }));
-}
+            <div class="controls">
+                <button class="btn btn-primary" id="recordBtn">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Start Recording
+                </button>
 
-function audioBufferToWav(buffer) {
-  const numOfChan = buffer.numberOfChannels;
-  const length = buffer.length * numOfChan * 2 + 44;
-  const bufferArray = new ArrayBuffer(length);
-  const view = new DataView(bufferArray);
-  let pos = 0;
+                <button class="btn btn-danger" id="stopBtn" disabled>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="9" y="9" width="6" height="6"/>
+                    </svg>
+                    Stop Recording
+                </button>
 
-  const writeString = s => { for (let i = 0; i < s.length; i++) view.setUint8(pos++, s.charCodeAt(i)); };
-  const writeUint16 = d => { view.setUint16(pos, d, true); pos += 2; };
-  const writeUint32 = d => { view.setUint32(pos, d, true); pos += 4; };
+                <button class="btn btn-success" id="playBtn" disabled>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <polygon points="5,3 19,12 5,21"/>
+                    </svg>
+                    Play Original
+                </button>
 
-  writeString('RIFF');
-  writeUint32(length - 8);
-  writeString('WAVE');
-  writeString('fmt ');
-  writeUint32(16);
-  writeUint16(1);
-  writeUint16(numOfChan);
-  writeUint32(buffer.sampleRate);
-  writeUint32(buffer.sampleRate * numOfChan * 2);
-  writeUint16(numOfChan * 2);
-  writeUint16(16);
-  writeString('data');
-  writeUint32(length - pos - 4);
+                <button class="btn btn-success" id="reversePlayBtn" disabled>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <polygon points="19,3 5,12 19,21"/>
+                    </svg>
+                    Play Reversed
+                </button>
+            </div>
 
-  const channels = [];
-  for (let i = 0; i < numOfChan; i++) channels.push(buffer.getChannelData(i));
+            <div class="downloads">
+                <a class="download-link" id="downloadLink" download="recording.wav">
+                    <svg class="icon" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download Original
+                </a>
+                <a class="download-link" id="reverseDownloadLink" download="recording_reversed.wav">
+                    <svg class="icon" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download Reversed
+                </a>
+            </div>
+        </div>
+    </div>
 
-  let offset = 0;
-  while (pos < length) {
-    for (let i = 0; i < numOfChan; i++) {
-      let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-      sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-      view.setInt16(pos, sample, true);
-      pos += 2;
-    }
-    offset++;
-  }
+    <script>
+        class AudioRecorderApp {
+            constructor() {
+                this.mediaRecorder = null;
+                this.recordedChunks = [];
+                this.recordedBlob = null;
+                this.currentAudio = null;
+                this.startTime = null;
+                this.timerInterval = null;
 
-  return new Blob([bufferArray], { type: 'audio/wav' });
-}
+                this.initializeElements();
+                this.attachEventListeners();
+            }
 
-function createReversedBlob(blob) {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return blob.arrayBuffer()
-    .then(buf => audioCtx.decodeAudioData(buf))
-    .then(audioBuffer => {
-      for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
-        Array.prototype.reverse.call(audioBuffer.getChannelData(i));
-      }
-      return audioBufferToWav(audioBuffer);
-    });
-}
+            initializeElements() {
+                this.recordBtn = document.getElementById('recordBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.playBtn = document.getElementById('playBtn');
+                this.reversePlayBtn = document.getElementById('reversePlayBtn');
+                this.downloadLink = document.getElementById('downloadLink');
+                this.reverseDownloadLink = document.getElementById('reverseDownloadLink');
+                this.statusDot = document.getElementById('statusDot');
+                this.statusText = document.getElementById('statusText');
+                this.timer = document.getElementById('timer');
+                this.visualizer = document.getElementById('visualizer');
+            }
 
-playBtn.onclick = () => {
-  stopCurrentAudio();
-  const url = URL.createObjectURL(recordedBlob);
-  currentAudio = new Audio(url);
-  const audio = currentAudio;
-  audio.onended = () => { if (currentAudio === audio) currentAudio = null; };
-  audio.play();
-};
+            attachEventListeners() {
+                this.recordBtn.addEventListener('click', () => this.startRecording());
+                this.stopBtn.addEventListener('click', () => this.stopRecording());
+                this.playBtn.addEventListener('click', () => this.playOriginal());
+                this.reversePlayBtn.addEventListener('click', () => this.playReversed());
+            }
 
-reversePlayBtn.onclick = () => {
-  playBlobReversed(recordedBlob);
-};
+            updateStatus(status, text) {
+                this.statusDot.className = `status-dot ${status}`;
+                this.statusText.textContent = text;
+            }
 
-</script>
+            startTimer() {
+                this.startTime = Date.now();
+                this.timer.style.display = 'block';
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
+                    this.timer.textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            }
+
+            stopTimer() {
+                clearInterval(this.timerInterval);
+                this.timer.style.display = 'none';
+            }
+
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.recordedChunks = [];
+
+                    this.mediaRecorder.ondataavailable = (e) => {
+                        this.recordedChunks.push(e.data);
+                    };
+
+                    this.mediaRecorder.onstop = async () => {
+                        this.recordedBlob = new Blob(this.recordedChunks, { type: 'audio/wav' });
+                        await this.processRecording();
+                        this.updateStatus('ready', 'Recording Ready');
+                        this.visualizer.textContent = 'Recording completed! Ready to play.';
+                    };
+
+                    this.mediaRecorder.start();
+                    this.startTimer();
+                    this.updateStatus('recording', 'Recording...');
+                    this.visualizer.textContent = 'Recording in progress...';
+
+                    this.recordBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+                    this.playBtn.disabled = true;
+                    this.reversePlayBtn.disabled = true;
+
+                } catch (err) {
+                    console.error('Unable to access microphone:', err);
+                    alert('Could not start recording. Please check your microphone permissions.');
+                    this.updateStatus('', 'Recording Failed');
+                }
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+
+                this.stopTimer();
+                this.recordBtn.disabled = false;
+                this.stopBtn.disabled = true;
+            }
+
+            async processRecording() {
+                this.playBtn.disabled = false;
+                this.reversePlayBtn.disabled = false;
+
+                // Create download link for original
+                this.downloadLink.href = URL.createObjectURL(this.recordedBlob);
+                this.downloadLink.style.display = 'inline-flex';
+
+                // Create reversed version
+                try {
+                    const reversedBlob = await this.createReversedBlob(this.recordedBlob);
+                    this.reverseDownloadLink.href = URL.createObjectURL(reversedBlob);
+                    this.reverseDownloadLink.style.display = 'inline-flex';
+                } catch (err) {
+                    console.error('Error creating reversed audio:', err);
+                }
+            }
+
+            stopCurrentAudio() {
+                if (this.currentAudio) {
+                    if (typeof this.currentAudio.pause === 'function') {
+                        this.currentAudio.pause();
+                    } else if (typeof this.currentAudio.stop === 'function') {
+                        try {
+                            this.currentAudio.stop();
+                        } catch (e) {}
+                    }
+                    this.currentAudio = null;
+                }
+            }
+
+            playOriginal() {
+                this.stopCurrentAudio();
+                const url = URL.createObjectURL(this.recordedBlob);
+                this.currentAudio = new Audio(url);
+
+                this.currentAudio.onended = () => {
+                    if (this.currentAudio) this.currentAudio = null;
+                    this.visualizer.textContent = 'Playback finished.';
+                };
+
+                this.currentAudio.play();
+                this.visualizer.textContent = 'Playing original audio...';
+            }
+
+            playReversed() {
+                this.playBlobReversed(this.recordedBlob);
+                this.visualizer.textContent = 'Playing reversed audio...';
+            }
+
+            playBlobReversed(blob) {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                blob.arrayBuffer().then(buf =>
+                    audioCtx.decodeAudioData(buf, audioBuf => {
+                        // Reverse the audio buffer
+                        for (let i = 0; i < audioBuf.numberOfChannels; i++) {
+                            Array.prototype.reverse.call(audioBuf.getChannelData(i));
+                        }
+
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = audioBuf;
+                        source.connect(audioCtx.destination);
+                        source.onended = () => {
+                            if (this.currentAudio === source) this.currentAudio = null;
+                            this.visualizer.textContent = 'Reversed playback finished.';
+                        };
+
+                        this.stopCurrentAudio();
+                        this.currentAudio = source;
+                        source.start();
+                    })
+                );
+            }
+
+            audioBufferToWav(buffer) {
+                const numOfChan = buffer.numberOfChannels;
+                const length = buffer.length * numOfChan * 2 + 44;
+                const bufferArray = new ArrayBuffer(length);
+                const view = new DataView(bufferArray);
+                let pos = 0;
+
+                const writeString = (s) => {
+                    for (let i = 0; i < s.length; i++) {
+                        view.setUint8(pos++, s.charCodeAt(i));
+                    }
+                };
+
+                const writeUint16 = (d) => {
+                    view.setUint16(pos, d, true);
+                    pos += 2;
+                };
+
+                const writeUint32 = (d) => {
+                    view.setUint32(pos, d, true);
+                    pos += 4;
+                };
+
+                writeString('RIFF');
+                writeUint32(length - 8);
+                writeString('WAVE');
+                writeString('fmt ');
+                writeUint32(16);
+                writeUint16(1);
+                writeUint16(numOfChan);
+                writeUint32(buffer.sampleRate);
+                writeUint32(buffer.sampleRate * numOfChan * 2);
+                writeUint16(numOfChan * 2);
+                writeUint16(16);
+                writeString('data');
+                writeUint32(length - pos - 4);
+
+                const channels = [];
+                for (let i = 0; i < numOfChan; i++) {
+                    channels.push(buffer.getChannelData(i));
+                }
+
+                let offset = 0;
+                while (pos < length) {
+                    for (let i = 0; i < numOfChan; i++) {
+                        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                        view.setInt16(pos, sample, true);
+                        pos += 2;
+                    }
+                    offset++;
+                }
+
+                return new Blob([bufferArray], { type: 'audio/wav' });
+            }
+
+            createReversedBlob(blob) {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                return blob.arrayBuffer()
+                    .then(buf => audioCtx.decodeAudioData(buf))
+                    .then(audioBuffer => {
+                        // Reverse the audio buffer
+                        for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                            Array.prototype.reverse.call(audioBuffer.getChannelData(i));
+                        }
+                        return this.audioBufferToWav(audioBuffer);
+                    });
+            }
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new AudioRecorderApp();
+        });
+    </script>
 </body>
 </html>
