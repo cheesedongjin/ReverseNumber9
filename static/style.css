@@ -177,10 +177,18 @@ body::before {
 }
 
 .controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 1.5rem;
     margin-bottom: 2rem;
+}
+
+.play-controls {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .btn {
@@ -366,7 +374,5 @@ body::before {
         margin: 1rem;
     }
 
-    .controls {
-        grid-template-columns: 1fr;
-    }
+    /* Keep play buttons side by side on small screens */
 }
